@@ -34,7 +34,7 @@ if __name__ == "__main__":
     sequence = manifest.sequences[0]
     canvases = sequence.canvases
 
-    print("Downloading {} images of manifest \"{}\"... to {}".format(
+    print("Downloading {} images of manifest \"{}\" to {}.".format(
         len(canvases),
         manifest.label,
         args.path
