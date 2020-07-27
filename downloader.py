@@ -3,7 +3,9 @@
 
 import argparse
 import os
-from utils import fetch
+import mimetypes
+from iiif_prezi.loader import ManifestReader
+from urllib import request
 
 
 if __name__ == "__main__":
@@ -21,16 +23,29 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Get the manifest
-    manifest = fetch(args.url)
-    assert manifest["@type"] == "sc:Manifest"
+    with request.urlopen(args.url) as response:
+        assert response.getcode() == 200
+        data = response.read()
+    reader = ManifestReader(data)
+    manifest = reader.read()
 
     # Get the sequence
-    sequence = manifest["sequences"][0]
-    assert sequence["@type"] == "sc:Sequence"
-    canvases = sequence["canvases"]
+    assert len(manifest.sequences) > 0
+    sequence = manifest.sequences[0]
+    canvases = sequence.canvases
 
     print("Downloading {} images of manifest \"{}\"... to {}".format(
         len(canvases),
-        manifest["label"],
+        manifest.label,
         args.path
     ))
+
+    for canvas in canvases:
+        label = canvas.label
+        print("Downloading {}...".format(label))
+        annot = canvas.images[0]
+        extension = mimetypes.guess_extension(annot.resource.format)
+        request.urlretrieve(
+            annot.resource.id,
+            os.path.join(args.path, label + extension)
+        )
