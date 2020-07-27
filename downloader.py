@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
+import concurrent.futures as futures
 import json
 import os
 import mimetypes
@@ -11,7 +12,16 @@ from PIL import Image
 from urllib import request
 
 
-def paste_tile(image, baseurl, x, y, w, h, ext='.jpg'):
+def unique_filename(name, extension):
+    if not os.path.exists(name + extension):
+        return name + extension
+    num = 1
+    while os.path.exists(name + ' - ' + str(num) + extension):
+        num += 1
+    return name + ' - ' + str(num) + extension
+
+
+def get_tile(baseurl, x, y, w, h, ext='.jpg'):
     with request.urlopen(
         baseurl +
         '/{},{},{},{}'.format(x, y, w, h) +
@@ -23,7 +33,8 @@ def paste_tile(image, baseurl, x, y, w, h, ext='.jpg'):
 
     with BytesIO(bytes_data) as tmp:
         tile_image = Image.open(tmp)
-        image.paste(tile_image, (x, y))
+        tile_image.load()
+    return (tile_image, (x, y))
 
 
 if __name__ == "__main__":
@@ -65,65 +76,82 @@ if __name__ == "__main__":
         extension = mimetypes.guess_extension(annot.resource.format)
         with request.urlopen(annot.resource.service.id) as response:
             assert response.getcode() == 200
+            raw_data = response.read()
+            content_type = response.getheader('Content-Type')
+        if content_type == 'application/json' or \
+                content_type == 'application/ld+json':
             image_info = json.loads(response.read())
-        if 'tiles' in image_info:
-            resource = annot.resource
-            result = Image.new('RGB', (resource.width, resource.height))
-            tile = image_info['tiles'][0]
-            columns = resource.width // tile['width']
-            rows = resource.height // tile['height']
+            if 'tiles' in image_info:
+                resource = annot.resource
+                result = Image.new('RGB', (resource.width, resource.height))
+                tile = image_info['tiles'][0]
+                columns = resource.width // tile['width']
+                rows = resource.height // tile['height']
 
-            for row in range(rows):
-                for column in range(columns):
-                    paste_tile(
-                        result,
-                        annot.resource.service.id,
-                        column * tile['width'],
-                        row * tile['height'],
-                        tile['width'],
-                        tile['height'],
+                futures_results = []
+                with futures.ThreadPoolExecutor(max_workers=10) as executor:
+                    for row in range(rows):
+                        for column in range(columns):
+                            futures_results.append(executor.submit(
+                                get_tile,
+                                annot.resource.service.id,
+                                column * tile['width'],
+                                row * tile['height'],
+                                tile['width'],
+                                tile['height'],
+                                extension
+                            ))
+
+                        # Handle any leftover edge
+                        if resource.width % tile['width'] > 0:
+                            futures_results.append(executor.submit(
+                                get_tile,
+                                annot.resource.service.id,
+                                columns * tile['width'],
+                                row * tile['height'],
+                                resource.width % tile['width'],
+                                tile['height'],
+                                extension
+                            ))
+
+                    # Handle leftover edge at the bottom
+                    if resource.height % tile['height'] > 0:
+                        for column in range(columns):
+                            futures_results.append(executor.submit(
+                                get_tile,
+                                annot.resource.service.id,
+                                column * tile['width'],
+                                rows * tile['height'],
+                                tile['width'],
+                                resource.height % tile['height'],
+                                extension
+                            ))
+
+                        # Handle any leftover edge
+                        if resource.width % tile['width'] > 0:
+                            futures_results.append(executor.submit(
+                                get_tile,
+                                annot.resource.service.id,
+                                columns * tile['width'],
+                                rows * tile['height'],
+                                resource.width % tile['width'],
+                                resource.height % tile['height'],
+                                extension
+                            ))
+                    for future in futures.as_completed(futures_results):
+                        tile_img, coord = future.result()
+                        result.paste(tile_img, coord)
+                    filename = unique_filename(
+                        os.path.join(args.path, label),
                         extension
                     )
-
-                # Handle any leftover edge
-                if resource.width % tile['width'] > 0:
-                    paste_tile(
-                        result,
-                        annot.resource.service.id,
-                        columns * tile['width'],
-                        row * tile['height'],
-                        resource.width % tile['width'],
-                        tile['height'],
-                        extension
-                    )
-
-            # Handle leftover edge at the bottom
-            if resource.height % tile['height'] > 0:
-                for column in range(columns):
-                    paste_tile(
-                        result,
-                        annot.resource.service.id,
-                        column * tile['width'],
-                        rows * tile['height'],
-                        tile['width'],
-                        resource.height % tile['height'],
-                        extension
-                    )
-
-                # Handle any leftover edge
-                if resource.width % tile['width'] > 0:
-                    paste_tile(
-                        result,
-                        annot.resource.service.id,
-                        columns * tile['width'],
-                        rows * tile['height'],
-                        resource.width % tile['width'],
-                        resource.height % tile['height'],
-                        extension
-                    )
-            result.save(os.path.join(args.path, label + extension))
+                    result.save(filename)
         else:
+            filename = unique_filename(
+                os.path.join(args.path, label),
+                extension
+            )
             request.urlretrieve(
                 annot.resource.id,
-                os.path.join(args.path, label + extension)
+                filename
             )
