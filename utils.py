@@ -16,7 +16,7 @@ THREADS_NUM = 6
 
 def unique_filename(name, extension):
     """Generate unique filename by adding number"""
-    if not os.path.exist(name + extension):
+    if not os.path.exists(name + extension):
         return name + extension
     num = 1
     while os.path.exists("{} ({}){}".format(name, str(num), extension)):
@@ -135,6 +135,16 @@ def download_canvas(canvas, path, prefix=""):
     # Save image
     filename = unique_filename(basename, ext)
     full_img.save(filename)
+
+
+def get_manifest(url):
+    """Download the manifest from url"""
+    try:
+        with request.urlopen(url) as response:
+            reader = ManifestReader(response.read())
+        return reader.read()
+    except Exception:
+        return None
 
 
 def process_manifest(url, path, include_label=False):

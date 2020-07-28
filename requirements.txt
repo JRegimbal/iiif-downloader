@@ -2,5 +2,8 @@ cachetools==4.1.1
 frozendict==1.2
 iiif-prezi==0.3.0
 lxml==4.5.2
+numpy==1.19.1
 Pillow==7.2.0
-PyLD<2.0.0      # Issue parsing with 2.x
+PyLD==1.0.5
+six==1.15.0
+wxPython==4.1.0
