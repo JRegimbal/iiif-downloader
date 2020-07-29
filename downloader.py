@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
+from threading import Thread
 import utils
 import wx
 
@@ -84,7 +85,14 @@ class MainWindow(wx.Frame):
                 )
                 if not ok:
                     break
-                utils.download_canvas(canvas, path)
+                runthread = Thread(
+                    target=utils.download_canvas,
+                    args=(canvas, path)
+                )
+                runthread.start()
+                while runthread.is_alive():
+                    progressdlg.Update(num)
+                    runthread.join(0.200)
 
             progressdlg.Destroy()
 

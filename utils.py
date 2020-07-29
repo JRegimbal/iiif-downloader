@@ -26,7 +26,7 @@ def unique_filename(name, extension):
 
 def get_tile(baseurl, x, y, w, h, ext='.jpg'):
     """Download tile with specified bounds at full res."""
-    url = "{0}/{1},{2},{3},{4}/{3}/0/default{5}".format(
+    url = "{0}/{1},{2},{3},{4}/{3},/0/default{5}".format(
         baseurl,
         x,
         y,
