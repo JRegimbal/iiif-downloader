@@ -67,6 +67,9 @@ class MainWindow(wx.Frame):
             )
             msgdlg.ShowModal()
         else:
+            path = os.path.join(path, manifest.label)
+            path = utils.unique_filename(path, "")
+            os.makedirs(path)
             sequence = manifest.sequences[0]
             canvases = sequence.canvases
 
@@ -87,7 +90,7 @@ class MainWindow(wx.Frame):
                     break
                 runthread = Thread(
                     target=utils.download_canvas,
-                    args=(canvas, path)
+                    args=(canvas, path, "{}_".format(num))
                 )
                 runthread.start()
                 while runthread.is_alive():
