@@ -75,7 +75,7 @@ class MainWindow(wx.Frame):
                 title="Downloading \"{}\"".format(manifest.label),
                 message="Starting...",
                 maximum=len(canvases),
-                style=wx.PD_CAN_ABORT
+                style=wx.PD_CAN_ABORT | wx.PD_ELAPSED_TIME
             )
 
             for canvas, num in zip(canvases, range(len(canvases))):
