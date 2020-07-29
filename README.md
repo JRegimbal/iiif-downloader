@@ -16,7 +16,7 @@ It has been tested on Linux (Debian bullseye) and macOS (High Sierra).
 
 On Linux:
 ```
-python -m PyInstaller --onefile --windowed --name iiif-downloader downloader.py
+python -m PyInstaller --onefile --windowed --name iiif-downloader --add-data=env/lib/python3.8/site-packages/iiif_prezi/contexts/*.json:iiif_prezi/contexts downloader.py
 ```
 On macOS:
 ```
