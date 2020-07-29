@@ -35,14 +35,19 @@ def get_tile(baseurl, x, y, w, h, ext='.jpg'):
         ext
     )
 
-    with request.urlopen(url) as response:
-        assert response.getcode() == 200
-        bytes_data = response.read()
+    for _ in range(3):
+        try:
+            with request.urlopen(url) as response:
+                assert response.getcode() == 200
+                bytes_data = response.read()
 
-    with BytesIO(bytes_data) as fp:
-        tile_image = Image.open(fp)
-        tile_image.load()
-    return (tile_image, (x, y))
+            with BytesIO(bytes_data) as fp:
+                tile_image = Image.open(fp)
+                tile_image.load()
+            return (tile_image, (x, y))
+        except OSError:
+            print("Issue trying to download {}".format(url))
+            pass
 
 
 def get_image(canvas):
