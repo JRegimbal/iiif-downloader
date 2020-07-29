@@ -20,5 +20,5 @@ python -m PyInstaller --onefile --windowed --name iiif-downloader downloader.py
 ```
 On macOS:
 ```
-python -m PyInstaller --windowed --name iiif-downloader --hidden-import=pkg_resources.py2_warn downloader.py
+python -m PyInstaller --windowed --name iiif-downloader --add-data=env/lib/python3.8/site-packages/iiif_prezi/contexts/*.json:iiif_prezi/contexts --hidden-import=pkg_resources.py2_warn downloader.py
 ```
