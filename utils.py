@@ -129,8 +129,12 @@ def download_canvas(canvas, path, prefix=""):
                     ))
             # Paste tiles together as they finish...
             for future in futures.as_completed(results):
-                tile_img, coord = future.result()
-                full_img.paste(tile_img, coord)
+                try:
+                    tile_img, coord = future.result()
+                    full_img.paste(tile_img, coord)
+                except Exception as e:
+                    print(e)
+                    print("Skipping this tile!")
 
     # Save image
     filename = unique_filename(basename, ext)
