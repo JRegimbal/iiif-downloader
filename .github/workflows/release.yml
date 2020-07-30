@@ -32,15 +32,13 @@ jobs:
           --name iiif-downloader downloader.py
        
       - name: Package files
-        env:
-          GITHUB_REF: ${{ github.ref }}
-        run: zip iiif-build-$(GITHUB_REF)-macos.zip -r dist *.py LICENSE README.md requirements.txt
+        run: zip iiif-build-macos.zip -r dist *.py LICENSE README.md requirements.txt
       
       - name: Store asset
         uses: actions/upload-artifact@v2
         with:
           name: macos-zip
-          path: ./iiif-build-${{ github.ref }}-macos.zip
+          path: ./iiif-build-macos.zip
              
   build-ubuntu:
     # The type of runner that the job will run on
@@ -70,15 +68,13 @@ jobs:
         --name iiif-downloader downloader.py
      
     - name: Package files
-      env:
-        GITHUB_REF: ${{ github.ref }}
-      run: zip iiif-downloader-$(GITHUB_REF)-ubuntu.zip -r dist *.py LICENSE README.md requirements.txt
+      run: zip iiif-downloader-ubuntu.zip -r dist *.py LICENSE README.md requirements.txt
     
     - name: Store asset
       uses: actions/upload-artifact@v2
       with:
         name: ubuntu-zip
-        path: ./iiif-downloader-${{ github.ref }}-ubuntu.zip
+        path: ./iiif-downloader-ubuntu.zip
   
   make_release:
     runs-on: ubuntu-latest
@@ -114,8 +110,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ./iiif-downloader-${{ github.ref }}-macos.zip
-          asset_name: iiif-downloader-${{ github.ref }}-macos.zip
+          asset_path: ./iiif-downloader-macos.zip
+          asset_name: iiif-downloader-macos.zip
           asset_content_type: application/zip
       
       - name: Upload ubuntu asset
@@ -125,6 +121,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ./iiif-downloader-${{ github.ref }}-ubuntu.zip
-          asset_name: iiif-downloader-${{ github.ref }}-ubuntu.zip
+          asset_path: ./iiif-downloader-ubuntu.zip
+          asset_name: iiif-downloader-ubuntu.zip
           asset_content_type: application/zip
