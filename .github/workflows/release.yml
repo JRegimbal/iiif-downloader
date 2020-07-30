@@ -1,0 +1,133 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build IIIF Downloader Releases
+
+on:
+  push:
+    tags:
+      - 'v*' # Catch releases
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Build with PyInstaller
+        run: |
+          SITE_PKG_LOC=$(pip show iiif_prezi | sed -n "s/Location: \(.*\)/\1/p")
+          python -m PyInstaller --onefile --windowed \
+          --add-data="$SITE_PKG_LOC/iiif_prezi/contexts/*.json:iiif_prezi/contexts" \
+          --hidden-import=pkg_resources.py2_warn \
+          --name iiif-downloader downloader.py
+       
+      - name: Package files
+        env:
+          GITHUB_REF: ${{ github.ref }}
+        run: zip iiif-build-$(GITHUB_REF)-macos.zip -r dist *.py LICENSE README.md requirements.txt
+      
+      - name: Store asset
+        env:
+          GITHUB_REF: ${{ github.ref }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: macos-zip
+          path: ./iiif-build-$(GITHUB_REF)-macos.zip
+             
+  build-ubuntu:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+    
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        sudo apt install -y libgtk-3-dev
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Build with PyInstaller
+      run: |
+        SITE_PKG_LOC=$(pip show iiif_prezi | sed -n "s/Location: \(.*\)/\1/p")
+        python -m PyInstaller --onefile --windowed \
+        --add-data="$SITE_PKG_LOC/iiif_prezi/contexts/*.json:iiif_prezi/contexts" \
+        --name iiif-downloader downloader.py
+     
+    - name: Package files
+      env:
+        GITHUB_REF: ${{ github.ref }}
+      run: zip iiif-downloader-$(GITHUB_REF)-ubuntu.zip -r dist *.py LICENSE README.md requirements.txt
+    
+    - name: Store asset
+      env:
+        GITHUB_REF: ${{ github.ref }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: ubuntu-zip
+        path: ./iiif-downloader-$(GITHUB_REF)-ubuntu.zip
+  
+  make_release:
+    runs-on: ubuntu-latest
+    needs: [build-macos, build-ubuntu]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Get macOS artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: macos-zip
+      
+      - name: Get ubuntu artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: ubuntu-artifact
+      
+      - name: Create release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      
+      - name: Upload macOS asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ./iiif-downloader-${{ github.ref }}-macos.zip
+          asset_name: iiif-downloader-${{ github.ref }}-macos.zip
+          asset_content_type: application/zip
+      
+      - name: Upload ubuntu asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ./iiif-downloader-${{ github.ref }}-ubuntu.zip
+          asset_name: iiif-downloader-${{ github.ref }}-ubuntu.zip
+          asset_content_type: application/zip
