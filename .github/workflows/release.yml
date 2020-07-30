@@ -37,12 +37,10 @@ jobs:
         run: zip iiif-build-$(GITHUB_REF)-macos.zip -r dist *.py LICENSE README.md requirements.txt
       
       - name: Store asset
-        env:
-          GITHUB_REF: ${{ github.ref }}
         uses: actions/upload-artifact@v2
         with:
           name: macos-zip
-          path: ./iiif-build-$(GITHUB_REF)-macos.zip
+          path: ./iiif-build-${{ github.ref }}-macos.zip
              
   build-ubuntu:
     # The type of runner that the job will run on
@@ -77,12 +75,10 @@ jobs:
       run: zip iiif-downloader-$(GITHUB_REF)-ubuntu.zip -r dist *.py LICENSE README.md requirements.txt
     
     - name: Store asset
-      env:
-        GITHUB_REF: ${{ github.ref }}
       uses: actions/upload-artifact@v2
       with:
         name: ubuntu-zip
-        path: ./iiif-downloader-$(GITHUB_REF)-ubuntu.zip
+        path: ./iiif-downloader-${{ github.ref }}-ubuntu.zip
   
   make_release:
     runs-on: ubuntu-latest
