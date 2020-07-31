@@ -65,6 +65,7 @@ jobs:
         SITE_PKG_LOC=$(pip show iiif_prezi | sed -n "s/Location: \(.*\)/\1/p")
         python -m PyInstaller --onefile --windowed \
         --add-data="$SITE_PKG_LOC/iiif_prezi/contexts/*.json:iiif_prezi/contexts" \
+                                                                                    --hidden-import=pkg_resources.py2_warn \
         --name iiif-downloader downloader.py
      
     - name: Package files
