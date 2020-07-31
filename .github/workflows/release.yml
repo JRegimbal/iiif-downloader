@@ -32,13 +32,13 @@ jobs:
           --name iiif-downloader downloader.py
        
       - name: Package files
-        run: zip iiif-build-macos.zip -r dist *.py LICENSE README.md requirements.txt
+        run: zip iiif-downloader-macos.zip -r dist *.py LICENSE README.md requirements.txt
       
       - name: Store asset
         uses: actions/upload-artifact@v2
         with:
           name: macos-zip
-          path: ./iiif-build-macos.zip
+          path: ./iiif-downloader-macos.zip
              
   build-ubuntu:
     # The type of runner that the job will run on
