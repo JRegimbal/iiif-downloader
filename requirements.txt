@@ -2,7 +2,7 @@ altgraph==0.17
 cachetools==4.1.1
 frozendict==1.2
 iiif-prezi==0.3.0
-lxml==4.6.3
+lxml==4.9.1
 numpy==1.19.1
 Pillow==8.2.0
 PyInstaller==3.6
