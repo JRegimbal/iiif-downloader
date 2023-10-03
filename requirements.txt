@@ -4,7 +4,7 @@ frozendict==1.2
 iiif-prezi==0.3.0
 lxml==4.6.3
 numpy==1.19.1
-Pillow==8.2.0
+Pillow==10.0.1
 PyInstaller==3.6
 PyLD==1.0.5
 six==1.15.0
